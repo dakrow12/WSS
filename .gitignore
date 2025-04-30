@@ -1,0 +1,29 @@
+#FIX LATER IF NEED BE
+
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+# IntelliJ
+*.iml
+.idea/
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
