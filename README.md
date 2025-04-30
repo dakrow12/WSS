@@ -22,6 +22,9 @@ The Wilderness Survival System is a Java-based simulation game where players sur
 - Survive as long as possible.
 
 ## Project Structure
+********ADD STRUCTURE DESCRIPTION HERE***********
+
+
 ## Contributors
 - Dakota Rowland
 -
