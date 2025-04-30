@@ -27,7 +27,7 @@ The Wilderness Survival System is a Java-based simulation game where players sur
 
 ## Contributors
 - Dakota Rowland
--
+- Henry Nguyen
 -
 -
 -
