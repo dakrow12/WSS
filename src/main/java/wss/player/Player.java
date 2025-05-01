@@ -34,7 +34,6 @@ public class Player {
             return false;
 
         Square target = map[newX][newY];
-
         int moveCost = target.getMovementCost();
         int foodCost = target.getFoodCost();
         int waterCost = target.getWaterCost();
@@ -58,7 +57,7 @@ public class Player {
     }
 
     public void trade(Trader trader) {
-        // TODO: Implement trading interaction
+        // TODO: Call trade interaction logic here
     }
 
     public void collectItem(Item item) {
@@ -83,4 +82,8 @@ public class Player {
     public void addGold(int amount) {
         currentGold += amount;
     }
+
+    public int getCurrentFood() { return currentFood; }
+    public int getCurrentWater() { return currentWater; }
+    public int getCurrentStrength() { return currentStrength; }
 }
