@@ -2,7 +2,7 @@ package wss.game;
 
 public class Map {
 
-   private square[][] grid;
+   private Square[][] grid;
 
    
     public Square[][] getGrid() {
