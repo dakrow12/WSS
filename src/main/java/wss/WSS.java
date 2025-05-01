@@ -1,3 +1,5 @@
+package wss;
+
 public class WSS {
 	private Map map;
 	private Player player;
