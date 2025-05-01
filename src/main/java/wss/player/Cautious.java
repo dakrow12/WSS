@@ -1,6 +1,7 @@
 package wss.player;
 
-
+import wss.game.Square;
+import wss.game.Direction;
 import wss.game.Path;
 import wss.game.Map;
 import wss.player.Player;
