@@ -1,6 +1,9 @@
 package wss.game;
 
 public class Map {
+
+   private square[][] grid;
+
    
     public Square[][] getGrid() {
     return grid;
