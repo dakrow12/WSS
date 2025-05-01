@@ -1,3 +1,4 @@
+package wss.player;
 
 public class NormalBrain extends Brain {
 	@Override
