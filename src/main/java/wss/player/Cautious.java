@@ -38,9 +38,23 @@ public Path closestFood(Player player, Map map) {
 	}
 
 	@Override
-	public Path easiestPath(Player player, Map map) {
-		return null;
-	}
+public Path easiestPath(Player player, Map map) {
+    int x = player.getX();
+    int y = player.getY();
+
+    Direction[] dirs = {Direction.EAST, Direction.NORTH, Direction.SOUTH};
+    for (Direction dir : dirs) {
+        int nx = x + dir.dx();
+        int ny = y + dir.dy();
+        if (map.inBounds(nx, ny)) {
+            Square s = map.getSquare(nx, ny);
+            return Path.of(dir, s.getMovementCost(), s.getWaterCost(), s.getFoodCost());
+        }
+    }
+
+    return null;
+}
+
 
 	@Override
 	public Path secondClosestFood(Player player, Map map) {
