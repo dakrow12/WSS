@@ -1,3 +1,5 @@
+package wss.player;
+
 public class Player {
 	private int maxStrength, currentStrength;
 	private int maxFood, currentFood;
