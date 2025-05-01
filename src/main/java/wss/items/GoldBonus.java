@@ -5,7 +5,15 @@ import wss.player.Player;
 
 public class GoldBonus extends Item {
 	@Override
-	public void activate(Player player) {
 
+	private int goldAmount;
+
+	public GoldBonus(int amount, boolean repeating)
+	{
+		super(repeating);
+		this.goldAmount = amount;
+	}
+	public void activate(Player player) {
+		
 	}
 }
