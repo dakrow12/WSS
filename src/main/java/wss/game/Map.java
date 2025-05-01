@@ -1,7 +1,11 @@
 package wss.game;
 
 public class Map {
-    private Square[][] grid;
+   
+    public Square[][] getGrid() {
+    return grid;
+    }
+
 
     public Map(Square[][] grid) {
         this.grid = grid;
