@@ -14,6 +14,6 @@ public class GoldBonus extends Item {
 		this.goldAmount = amount;
 	}
 	public void activate(Player player) {
-		
+		player.increaseGold(goldAmount); 
 	}
 }
