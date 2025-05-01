@@ -1,5 +1,9 @@
 package wss.trader;
 
+import wss.items.Item;
+import wss.player.Player;
+
+
 public class Trader extends Item {
 	private TraderType personality;
 	private TraderState state;
