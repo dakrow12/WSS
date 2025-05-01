@@ -1,3 +1,5 @@
+package wss.game;
+
 import Terrains.Terrain;
 
 import java.util.List;
