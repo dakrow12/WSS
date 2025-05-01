@@ -1,3 +1,5 @@
+package wss.items;
+
 public abstract class Item {
 	private boolean repeating;
 
