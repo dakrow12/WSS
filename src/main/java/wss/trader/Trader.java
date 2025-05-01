@@ -1,3 +1,5 @@
+package wss.trader;
+
 public class Trader extends Item {
 	private TraderType personality;
 	private TraderState state;
