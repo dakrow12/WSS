@@ -1,5 +1,7 @@
 package wss.items;
 
+import wss.player.Player
+	
 public abstract class Item {
 	private boolean repeating;
 
