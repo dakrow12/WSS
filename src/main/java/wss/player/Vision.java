@@ -1,3 +1,5 @@
+package wss.player;
+
 public abstract class Vision {
 	public abstract Path closestFood(Player player, Map map);
 	public abstract Path closestWater(Player player, Map map);
