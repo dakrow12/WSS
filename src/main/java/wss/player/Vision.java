@@ -1,5 +1,10 @@
 package wss.player;
 
+import wss.player.Player;
+import wss.game.Path;
+import wss.game.Map;
+
+
 public abstract class Vision {
 	public abstract Path closestFood(Player player, Map map);
 	public abstract Path closestWater(Player player, Map map);
