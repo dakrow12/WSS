@@ -1,5 +1,10 @@
 package wss.player;
 
+import wss.player.Player;
+import wss.game.Path;
+import wss.game.Map;
+
+
 public class KeenEyed extends Vision {
 	@Override
 	public Path closestFood(Player player, Map map) {
