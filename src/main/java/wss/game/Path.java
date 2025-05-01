@@ -1,3 +1,5 @@
+package wss.game;
+
 import java.util.List;
 
 public class Path {
