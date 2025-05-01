@@ -1,23 +1,35 @@
 package wss.game;
 
-import Terrains.Terrain;
-
-import java.util.List;
+import wss.items.Item;
 
 public class Square {
-		private Terrain terrain;
-		private List<Item> items;
+    private String terrain;
+    private int movementCost;
+    private int waterCost;
+    private int foodCost;
+    private Item item;
 
-		public void enterPlayer(Player p) {  }
-		public void collectItems(Player p) {  }
+    public Square(String terrain, int move, int water, int food) {
+        this.terrain = terrain;
+        this.movementCost = move;
+        this.waterCost = water;
+        this.foodCost = food;
+        this.item = null;
+    }
 
-		public void setItem(Item item) {
-    			this.item = item;
-		}
-	
-		public boolean hasFoodBonus() {
-    			return item instanceof FoodBonus;
-		}
+    public int getMovementCost() { return movementCost; }
+    public int getWaterCost() { return waterCost; }
+    public int getFoodCost() { return foodCost; }
 
+    public void setItem(Item item) {
+        this.item = item;
+    }
+
+    public Item getItem() {
+        return item;
+    }
+
+    public boolean hasFoodBonus() {
+        return item != null && item instanceof wss.items.FoodBonus;
+    }
 }
-
