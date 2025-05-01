@@ -1,3 +1,5 @@
+package wss.game;
+
 public class Map {
 		private int width, height;
 		private Square[][] grid;
