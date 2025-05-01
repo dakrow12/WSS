@@ -1,5 +1,12 @@
 package wss.player;
 
+
+import wss.game.Path;
+import wss.game.Map;
+import wss.player.Player;
+
+
+
 public class Focused extends Vision {
 	@Override
 	public Path closestFood(Player player, Map map) {
