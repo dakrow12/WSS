@@ -2,6 +2,9 @@ package wss.player;
 
 import wss.player.Player;
 import wss.game.Map;
+import wss.game.Path;
+import wss.game.Direction;
+
 
 
 public class ConservativeBrain extends Brain {
