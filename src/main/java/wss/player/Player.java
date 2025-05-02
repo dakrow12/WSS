@@ -59,10 +59,48 @@ public class Player {
         currentWater = Math.max(0, currentWater - 1);
     }
 
-    public void trade(Trader trader) {
-        // TODO: Call trade interaction logic here
-        System.out.println("Player attempts to trade with " + trader.getPersonality() + " trader.");
+public void trade(Trader trader) {
+    trader.activate(this);
+
+    // Simple demo offer — the Brain logic should do this later
+    TradeOffer myOffer = new TradeOffer(
+        0,  // offerGold
+        2,  // offerFood
+        0,  // offerWater
+        0,  // requestGold
+        0,  // requestFood
+        2   // requestWater
+    );
+
+    boolean accepted = trader.evaluatePlayerOffer(myOffer);
+
+    if (!accepted) {
+        TradeOffer counter = trader.generateCounterOffer(myOffer);
+        if (counter != null) {
+            System.out.println("Trader made a counter: " + counter);
+
+            if (trader.acceptTraderCounterOffer()) {
+                if (finalizeTrade(counter)) {
+                    System.out.println("Trade completed (counter accepted).");
+                } else {
+                    System.out.println("Trade failed: not enough resources to fulfill counter offer.");
+                }
+            } else {
+                trader.rejectTraderCounterOffer();
+                System.out.println("Player rejected the counter offer.");
+            }
+        } else {
+            System.out.println("No counter-offer from trader.");
+        }
+    } else {
+        if (finalizeTrade(myOffer)) {
+            System.out.println("Trade completed (original offer accepted).");
+        } else {
+            System.out.println("Trade failed: not enough resources to fulfill original offer.");
+        }
     }
+}
+
 
     public void collectItem(Item item) {
         item.activate(this);
@@ -122,28 +160,28 @@ public class Player {
      * Assumes the player is the one INITIATING the offer acceptance.
      * @param acceptedOffer The final agreed-upon TradeOffer.
      */
-    public boolean finalizeTrade(TradeOffer acceptedOffer) {
-        // Double check affordability before finalizing
-        if (!canAffordOffer(acceptedOffer)) {
-            System.out.println("Trade finalization failed: Player cannot afford the offer anymore.");
-            return false;
-        }
-
-        System.out.println("Finalizing trade: " + acceptedOffer);
-
-        // Remove what player gives
-        removeGold(acceptedOffer.offerGold);
-        removeFood(acceptedOffer.offerFood);
-        removeWater(acceptedOffer.offerWater);
-
-        // Add what player receives
-        addGold(acceptedOffer.requestGold);
-        addFood(acceptedOffer.requestFood);
-        addWater(acceptedOffer.requestWater);
-
-        System.out.println("Trade successful!");
-        return true;
+   public boolean finalizeTrade(TradeOffer offer) {
+    // Check if player has enough to give
+    if (currentGold < offer.offerGold ||
+        currentFood < offer.offerFood ||
+        currentWater < offer.offerWater) {
+        System.out.println("Trade failed: not enough resources.");
+        return false;
     }
+
+    // Deduct offered resources
+    currentGold -= offer.offerGold;
+    currentFood -= offer.offerFood;
+    currentWater -= offer.offerWater;
+
+    // Add received resources
+    currentGold += offer.requestGold;
+    currentFood = Math.min(currentFood + offer.requestFood, maxFood);
+    currentWater = Math.min(currentWater + offer.requestWater, maxWater);
+
+    return true;
+}
+
 
     // --- Getters ---
     public int getX() { return positionX; }
