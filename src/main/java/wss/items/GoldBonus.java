@@ -4,7 +4,6 @@ import wss.player.Player;
 
 
 public class GoldBonus extends Item {
-	@Override
 
 	private int goldAmount;
 
@@ -14,6 +13,6 @@ public class GoldBonus extends Item {
 		this.goldAmount = amount;
 	}
 	public void activate(Player player) {
-		player.increaseGold(goldAmount); 
+		player.addGold(goldAmount);
 	}
 }

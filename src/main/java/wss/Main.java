@@ -16,7 +16,7 @@ public class Main {
         }
 
         // Step 2: Place a FoodBonus east of starting position
-        map[1][0].setItem(new FoodBonus(5));
+        map[1][0].setItem(new FoodBonus(5, false));
 
         // Step 3: Create player at (0,0)
         Vision vision = new Cautious();

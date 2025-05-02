@@ -14,9 +14,12 @@ public class WSS {
             }
         }
 
+        // To place traders --- square.setItem(new Trader(TraderType.GREEDY));.
+        // You can change personalities
+
         // 2. Place some food and water bonuses
-        grid[1][0].setItem(new FoodBonus(5));
-        grid[2][1].setItem(new WaterBonus() {
+        grid[1][0].setItem(new FoodBonus(5, true));
+        grid[2][1].setItem(new WaterBonus(false) {
             @Override public void activate(Player p) { p.addWater(5); }
         });
 
