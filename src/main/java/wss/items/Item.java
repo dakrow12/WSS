@@ -23,9 +23,4 @@ public abstract class Item {
 	public boolean isRepeating() {
 		return repeating;
 	}
-
-	public void reset()
-	{
-
-	}
 }
