@@ -29,6 +29,19 @@ public class Square {
         return item;
     }
 
+    public void collectItem(Player player)
+    {
+        Iterator<Item> it = items.iterator();
+        while (it.hasNext()) {
+            Item item = it.next();
+            item.activate(player);
+            if (!item.isRepeating())
+            {
+                it.remove();
+            }
+        }
+    }
+
     public boolean hasFoodBonus() {
         return item != null && item instanceof wss.items.FoodBonus;
     }
