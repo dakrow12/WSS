@@ -4,12 +4,14 @@ import wss.player.Player;
 
 
 public class WaterBonus extends Item {
-	protected WaterBonus(boolean repeating) {
+	private int waterAmount;
+	protected WaterBonus(int amount, boolean repeating) {
 		super(repeating);
+		this.waterAmount = amount;
 	}
 
 	@Override
 	public void activate(Player player) {
-
+		player.increaseWater(waterAmount);
 	}
 }
