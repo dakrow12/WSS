@@ -1,30 +1,54 @@
 package wss;
 
-import wss.player.*;
+import java.util.Scanner;
 import wss.game.*;
 import wss.items.*;
+import wss.player.*;
 
 public class WSS {
     public static void main(String[] args) {
-        // 1. Create a 5x3 map
-        Square[][] grid = new Square[5][3];
-        for (int x = 0; x < 5; x++) {
-            for (int y = 0; y < 3; y++) {
-                grid[x][y] = new Square("plains", 1, 1, 1);
-            }
+        // Get map dimensions and difficulty from the user
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the width of the map: ");
+        int width = scanner.nextInt();
+        System.out.print("Enter the height of the map: ");
+        int height = scanner.nextInt();
+        System.out.print("Choose difficulty (EASY, MEDIUM, HARD): ");
+        String difficultyInput = scanner.next().toUpperCase();
+        Difficulty difficulty;
+        try {
+            difficulty = Difficulty.valueOf(difficultyInput);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid difficulty. Using default EASY.");
+            difficulty = Difficulty.EASY;
         }
+        scanner.close();
+
+        // 1. Generate the map
+        Map map = new Map(); 
+        map.generateMap(width, height, difficulty);
+        System.out.println("\nGenerated Map:");
+        map.printMap(); // This line will print the map to the terminal
 
         // To place traders --- square.setItem(new Trader(TraderType.GREEDY));.
         // You can change personalities
 
-        // 2. Place some food and water bonuses
-        grid[1][0].setItem(new FoodBonus(5, true));
-        grid[2][1].setItem(new WaterBonus(false) {
-            @Override public void activate(Player p) { p.addWater(5); }
-        });
+        // 2. Place some food and water bonuses (using the generated map)
+        if (map.getHeight() > 0 && map.getWidth() > 1) {
+            map.getSquare(1, 0).addItem(new FoodBonus(5, true));
+        }
+        /*
+        if (map.getHeight() > 1 && map.getWidth() > 2) {
+            map.getSquare(2, 1).addItem(new WaterBonus(false) {
+                @Override
+                public void activate(Player p) {
+                    p.addWater(5);
+                }
+            });
+        }
+        */    
 
         // 3. Create Map and Player
-        Map map = new Map(grid);
         Player player = new Player(10, 10, 10, new Cautious(), new ConservativeBrain());
 
         // 4. Turn loop
@@ -37,7 +61,7 @@ public class WSS {
             System.out.println("Water: " + player.getCurrentWater());
 
             // Check for end conditions
-            if (player.getX() == grid.length - 1) {
+            if (player.getX() == map.getWidth() - 1) {
                 System.out.println("🎉 Player reached the east edge and won!");
                 break;
             }
