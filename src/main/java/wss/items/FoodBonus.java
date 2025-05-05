@@ -11,6 +11,11 @@ public class FoodBonus extends Item {
     }
 
     @Override
+    
+    /**
+	 * Activates the item's effect of giving food to the player.
+	 * @param player The player activating the item.
+	 */
     public void activate(Player player) {
         player.addFood(foodAmount);
     }
