@@ -11,7 +11,7 @@ public class WaterBonus extends Item {
 	 * @param amount The amount of water bonus given to player.
   	 * @param repeating Check if the item can be used multiple times.
          */
-	protected WaterBonus(int amount, boolean repeating) {
+	public WaterBonus(int amount, boolean repeating) {
 		super(repeating);
 		this.waterAmount = amount;
 	}
