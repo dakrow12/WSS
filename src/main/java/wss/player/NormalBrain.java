@@ -38,6 +38,9 @@ public class NormalBrain extends Brain {
 
 
         }
+
+        Square currentSquare = map.getSquare(player.getX(), player.getY());
+        currentSquare.collectItem(player);
     }
     
 
