@@ -4,30 +4,93 @@ import wss.game.*;
 import wss.items.FoodBonus;
 import wss.player.*;
 import wss.trader.Trader;
+import java.util.Scanner;
+import wss.items.*;
+import wss.trader.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Random;
+
 
 public class Main {
     public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Choose mode:\n1 = Full game with engine\n2 = Small unit test map");
+        int mode = scanner.nextInt();
+
+        if (mode == 1) {
+            runFullGame(scanner);
+        } else {
+            runUnitTest();
+        }
+
+        scanner.close();
+    }
+
+    private static void runFullGame(Scanner scanner) {
+        System.out.print("Enter map width: ");
+        int width = scanner.nextInt();
+        System.out.print("Enter map height: ");
+        int height = scanner.nextInt();
+
+        System.out.print("Choose difficulty (EASY, MEDIUM, HARD): ");
+        String diffInput = scanner.next().toUpperCase();
+        WSSGameEngine.Difficulty difficulty;
+        try {
+            difficulty = WSSGameEngine.Difficulty.valueOf(diffInput);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid difficulty. Defaulting to EASY.");
+            difficulty = WSSGameEngine.Difficulty.EASY;
+        }
+
+        System.out.print("Choose brain (NORMAL, GREED, CONSERVATIVE): ");
+        String brainInput = scanner.next().toUpperCase();
+        WSSGameEngine.BrainType brainType;
+        try {
+            brainType = WSSGameEngine.BrainType.valueOf(brainInput);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Invalid brain. Defaulting to NORMAL.");
+            brainType = WSSGameEngine.BrainType.NORMAL;
+        }
+
+        WSSGameEngine game = new WSSGameEngine(width, height, difficulty, brainType);
+        game.runGame();
+    }
+
+    private static void runUnitTest() {
         // Step 1: Create a simple map (3x3)
-        Square[][] map = new Square[3][3];
+        Square[][] grid = new Square[3][3];
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
-                map[x][y] = new Square("plains", 1, 1, 1); // simple terrain
+                grid[x][y] = new Square("plains", 1, 1, 1);
             }
         }
 
-        // Step 2: Place a FoodBonus east of starting position
-        map[1][0].setItem(new FoodBonus(5, false));
+        // Step 2: Place a FoodBonus east of the start
+        grid[1][0].setItem(new FoodBonus(5, false));
 
-        // Step 3: Create player at (0,0)
+        // Step 3: Create a player with vision/brain
         Vision vision = new Cautious();
-        Brain brain = new ConservativeBrain();
+        Map map = new Map(); // use correct constructor
+map.setGrid(grid);   // or however you inject the grid
+
+
+
+	Brain brain = new ConservativeBrain(null, map);
+
         Player player = new Player(10, 10, 10, vision, brain);
+	
+	brain = new ConservativeBrain(player, map);
+	
+	player.setBrain(brain);
+
 
         System.out.println("Starting position: (" + player.getX() + ", " + player.getY() + ")");
         System.out.println("Food: " + player.getCurrentFood());
 
         // Step 4: Let the brain make a move
-        brain.makeMove(player, new Map(map));
+        brain.makeMove();
 
         System.out.println("After move: (" + player.getX() + ", " + player.getY() + ")");
         System.out.println("Food: " + player.getCurrentFood());

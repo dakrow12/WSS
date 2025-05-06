@@ -1,4 +1,6 @@
 package wss.game;
+import java.util.List;
+
 
 public enum Direction {
     NORTH(0, -1),
@@ -20,4 +22,21 @@ public enum Direction {
 
     public int dx() { return dx; }
     public int dy() { return dy; }
+
+
+
+	public static List<Direction> eastwardDirections() {
+    return List.of(EAST, NORTHEAST, SOUTHEAST);
 }
+
+public boolean isEastward() {
+    return this == EAST || this == NORTHEAST || this == SOUTHEAST;
+}
+
+
+
+}
+
+
+
+

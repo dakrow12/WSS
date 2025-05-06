@@ -17,6 +17,13 @@ public class Map {
         this.grid = null;
     }
 
+
+	public Map(Square[][] grid) {
+    this.grid = grid;
+}
+
+
+
     /**
      * Returns the 2D array representing the game map (grid of Squares).
      *
@@ -25,6 +32,9 @@ public class Map {
     public Square[][] getGrid() {
         return grid;
     }
+	public Square getSquare(Position pos) {
+    return getSquare(pos.getX(), pos.getY());
+}
 
     /**
      * Returns the width of the map.
@@ -70,6 +80,14 @@ public class Map {
             }
         }
     }
+
+
+
+
+public void setGrid(Square[][] grid) {
+    this.grid = grid;
+}
+
 
     /**
      * Determines the terrain type for a given square based on the game's difficulty.

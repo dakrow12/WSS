@@ -28,7 +28,7 @@ public class Trader extends Item {
 		this.reset();
 	}
 
-	@Override
+	
 	public void reset() {
 		this.currentState = TraderState.IDLE;
 		this.negotiationRound = 0;
@@ -40,7 +40,7 @@ public class Trader extends Item {
 	 * Called when the player interacts with the trader's square.
 	 * Initiates the negotiation process if the trader is idle.
 	 */
-	@Override
+	
 	public void activate(Player player) {
 		if (this.currentState == TraderState.IDLE) {
 			System.out.println("Player encounters a " + this.personality + " Trader.");
@@ -297,6 +297,13 @@ public class Trader extends Item {
 		}
 		return null; // Often doesn't counter
 	}
+
+
+public TradeResponse makeTrade(TradeOffer offer) {
+    boolean accepted = evaluatePlayerOffer(offer);
+    return new TradeResponse(accepted, accepted ? offer : null);
+}
+
 
 	// --- Getters ---
 	public TraderState getCurrentState() {

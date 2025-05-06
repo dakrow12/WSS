@@ -15,6 +15,10 @@ public class Path {
         this.totalWaterCost = water;
         this.totalFoodCost = food;
     }
+public List<Direction> getDirections() {
+    return steps;
+}
+
 
     public List<Direction> getSteps() { return steps; }
     public int getTotalMovementCost() { return totalMovementCost; }
