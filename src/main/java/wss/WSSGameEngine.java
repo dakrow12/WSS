@@ -32,6 +32,9 @@ public class WSSGameEngine {
 	// Add early traders
 	map.getSquare(2, 0).setTrader(new Trader(TraderType.FAIR));
 
+	map.getSquare(9, 1).setTrader(new Trader(TraderType.GENEROUS));
+
+
 
 
         // Adjust starting resources based on difficulty
@@ -41,9 +44,9 @@ public class WSSGameEngine {
         
         switch (difficulty) {
             case EASY:
-                startingFood = 20;
-                startingWater = 20;
-                startingStrength = 15;
+                startingFood = 25;
+                startingWater = 25;
+                startingStrength = 18;
                 break;
             case MEDIUM:
                 // Default values

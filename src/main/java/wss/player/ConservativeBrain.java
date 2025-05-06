@@ -75,18 +75,43 @@ public class ConservativeBrain extends Brain {
             }
         }
         
-        // Priority 2: Water if low
-        if (player.getCurrentWater() < player.getMaxWater() * 0.5) { // was 0.3
-            System.out.println("Water is low, looking for water sources");
-            Path closestWater = player.getVision().closestWater(player, map);
-            if (closestWater != null && isPathFeasible(closestWater)) {
-                System.out.println("Found water source, moving to collect");
-                followPath(closestWater);
+// Priority 2: Water if low
+if (player.getCurrentWater() < player.getMaxWater() * 0.5) {
+    System.out.println("Water is low, looking for water sources");
+    Path closestWater = player.getVision().closestWater(player, map);
+    if (closestWater != null && isPathFeasible(closestWater)) {
+        System.out.println("Found water source, moving to collect");
+        followPath(closestWater);
+        return;
+    } else {
+        System.out.println("No accessible water source found");
+
+        //  Try trading for water if there's a trader on the square
+        Square currentSquare = map.getSquare(player.getX(), player.getY());
+        if (currentSquare.hasTrader()) {
+            Trader trader = currentSquare.getTrader();
+            System.out.println("Attempting to trade for water with " + trader.getPersonality());
+
+            TradeOffer offer = new TradeOffer(
+                1, // offerGold
+                0, // offerFood
+                0, // offerWater
+                0, // requestGold
+                0, // requestFood
+                3  // requestWater
+            );
+
+            TradeResponse response = trader.makeTrade(offer);
+            if (response.isAccepted()) {
+                player.finalizeTrade(response.getFinalOffer());
+                System.out.println("Trade successful: Gained water from trader.");
                 return;
             } else {
-                System.out.println("No accessible water source found");
+                System.out.println("Trade rejected.");
             }
         }
+    }
+}
         
         // Priority 3: Rest if movement is low
         if (player.getCurrentMovement() < player.getMaxMovement() * 0.6) { // was 0.5
