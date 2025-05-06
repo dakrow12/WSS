@@ -13,12 +13,46 @@ public class WSSGameEngine {
 
     public WSSGameEngine(int width, int height, Difficulty difficulty, BrainType brainType) {
         this.map = new Map();
-map.generateMap(width, height, wss.game.Difficulty.valueOf(difficulty.name()));
-        this.player = new Player(10, 10, 10, new Cautious(), createBrain(brainType));
+        map.generateMap(width, height, wss.game.Difficulty.valueOf(difficulty.name()));
+        
+        // Adjust starting resources based on difficulty
+        int startingFood = 10;
+        int startingWater = 10;
+        int startingStrength = 10;
+        
+        switch (difficulty) {
+            case EASY:
+                startingFood = 15;
+                startingWater = 15;
+                startingStrength = 12;
+                break;
+            case MEDIUM:
+                // Default values
+                break;
+            case HARD:
+                startingFood = 12;
+                startingWater = 12;
+                startingStrength = 10;
+                break;
+        }
+        
+        // First create player with null brain
+        this.player = new Player(startingStrength, startingFood, startingWater, new Cautious(), null);
+        
+        // Then create brain with player reference
+        this.brain = createBrain(brainType);
+        
+        // Set the brain on the player
+        this.player.setBrain(this.brain);
+        
         this.turns = 0;
         this.gameOver = false;
         System.out.println("\nGenerated Map:");
         map.printMap();
+        
+        System.out.println("\nStarting Resources: Food=" + player.getCurrentFood() + 
+                         ", Water=" + player.getCurrentWater() + 
+                         ", Strength=" + player.getCurrentStrength());
     }
 
     private Brain createBrain(BrainType type) {
@@ -38,8 +72,24 @@ map.generateMap(width, height, wss.game.Difficulty.valueOf(difficulty.name()));
     public void runGame() {
         while (!gameOver) {
             turns++;
+            System.out.println("\n=== Turn " + turns + " ===");
+            System.out.println("Position: (" + player.getX() + ", " + player.getY() + ")");
+            System.out.println("Resources: Food=" + player.getCurrentFood() + 
+                             ", Water=" + player.getCurrentWater() + 
+                             ", Strength=" + player.getCurrentStrength() + 
+                             ", Gold=" + player.getCurrentGold());
+            
             updateGameState();
+            
+            System.out.println("After consumption: Food=" + player.getCurrentFood() + 
+                             ", Water=" + player.getCurrentWater());
+            
+            String terrainType = map.getSquare(player.getX(), player.getY()).getTerrain();
+            System.out.println("Current terrain: " + terrainType);
+            
             brain.makeMove();
+            
+            System.out.println("Moved to: (" + player.getX() + ", " + player.getY() + ")");
 
             // Check win/loss conditions
             if (player.getX() >= map.getWidth() - 1) {
@@ -60,8 +110,12 @@ map.generateMap(width, height, wss.game.Difficulty.valueOf(difficulty.name()));
     }
 
     private void updateGameState() {
+        // For simplicity, consume 1 food and 1 water per turn
         player.consumeFood(1);
         player.consumeWater(1);
+        
+        // The Player.rest() method now handles reduced consumption during rest
+        
         player.updateVision();
     }
 

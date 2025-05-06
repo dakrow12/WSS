@@ -13,6 +13,8 @@ public class Player {
     private int maxWater, currentWater;
     private int currentGold;
     private int positionX, positionY;
+    private boolean duringRest; // Track if player is resting
+    private int turnsSinceLastRest = 0;
 
     private Vision vision;
     private Brain brain;
@@ -26,6 +28,8 @@ public class Player {
         this.brain = brain;
         this.positionX = 0;
         this.positionY = 0;
+        this.duringRest = false;
+        this.turnsSinceLastRest = 0;
     }
 
     public boolean move(Direction dir, Square[][] map) {
@@ -49,13 +53,21 @@ public class Player {
 
         positionX = newX;
         positionY = newY;
+        duringRest = false;
         return true;
     }
 
     public void rest() {
+        System.out.println("Player is resting to recover strength");
+        
+        // Recover strength
         currentStrength = Math.min(maxStrength, currentStrength + 2);
-        currentFood = Math.max(0, currentFood - 1);
-        currentWater = Math.max(0, currentWater - 1);
+        
+        // Resting consumes less resources
+        // Already handled by WSSGameEngine, so we don't consume here
+        
+        duringRest = true;
+        turnsSinceLastRest = 0;
     }
 
     public void trade(Trader trader) {
@@ -132,8 +144,22 @@ public class Player {
     public void updateVision() { /* placeholder for vision logic */ }
 
     public boolean canMove(Direction dir) {
-        // Dummy implementation; real one would check map boundaries and costs
-        return true;
+        // Real implementation to check map boundaries and terrain costs
+        if (brain == null || brain.getMap() == null) return false;
+        
+        int newX = positionX + dir.dx();
+        int newY = positionY + dir.dy();
+        
+        // Check if the new position is within map boundaries
+        if (!brain.getMap().inBounds(newX, newY)) return false;
+        
+        // Get the target square
+        Square target = brain.getMap().getSquare(newX, newY);
+        
+        // Check if player has enough resources to enter the square
+        return currentStrength >= target.getMovementCost() &&
+               currentFood >= target.getFoodCost() &&
+               currentWater >= target.getWaterCost();
     }
 
     public Position getPosition() {
@@ -178,4 +204,6 @@ public class Player {
             this.positionY = y;
         }
     }
+
+    public boolean isDuringRest() { return duringRest; }
 }

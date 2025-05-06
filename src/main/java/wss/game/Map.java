@@ -208,7 +208,86 @@ public void setGrid(Square[][] grid) {
      * @param random     A Random object for generating random numbers.
      */
     private void placeItem(Square square, Difficulty difficulty, Random random) {
-        // Implement item placement logic here based on difficulty
+        // Implementation of item placement logic based on difficulty and terrain
+        double itemChance = 0.0;
+        
+        // Set base chance based on difficulty - increase frequencies
+        switch (difficulty) {
+            case EASY:
+                itemChance = 0.35; // 35% chance for EASY (was 15%)
+                break;
+            case MEDIUM:
+                itemChance = 0.25; // 25% chance for MEDIUM (was 10%)
+                break;
+            case HARD:
+                itemChance = 0.15; // 15% chance for HARD (was 7%)
+                break;
+        }
+        
+        // Roll for item placement
+        if (random.nextDouble() < itemChance) {
+            String terrain = square.getTerrain();
+            
+            // Logic for placing specific items based on terrain
+            if (terrain.equals("plains")) {
+                // Plains have more food
+                if (random.nextDouble() < 0.6) {
+                    square.addItem(new wss.items.FoodBonus(3, false));
+                } else {
+                    square.addItem(new wss.items.WaterBonus(2, false));
+                }
+            } else if (terrain.equals("forest")) {
+                // Forests have more food and sometimes gold
+                if (random.nextDouble() < 0.6) {  // increased from 0.5
+                    square.addItem(new wss.items.FoodBonus(4, false));
+                } else if (random.nextDouble() < 0.4) {  // increased from 0.3
+                    square.addItem(new wss.items.GoldBonus(1, false));
+                }
+            } else if (terrain.equals("mountain")) {
+                // Mountains have gold and some water
+                if (random.nextDouble() < 0.7) {
+                    square.addItem(new wss.items.GoldBonus(2, false));
+                } else {
+                    square.addItem(new wss.items.WaterBonus(3, false));  // added water to mountains
+                }
+            } else if (terrain.equals("desert")) {
+                // Desert has little resources but more valuable
+                if (random.nextDouble() < 0.3) {
+                    square.addItem(new wss.items.GoldBonus(3, false));
+                } else if (random.nextDouble() < 0.2) {  // added food to desert
+                    square.addItem(new wss.items.FoodBonus(5, false));  // more valuable food in desert
+                }
+            } else if (terrain.equals("swamp")) {
+                // Swamps have water and sometimes food
+                if (random.nextDouble() < 0.8) {  // increased from 0.7
+                    square.addItem(new wss.items.WaterBonus(3, true)); // Repeating water source
+                } else {
+                    square.addItem(new wss.items.FoodBonus(2, false));
+                }
+            }
+        }
+        
+        // Add traders with lower probability
+        double traderChance = 0.05; // 5% base chance (increased from 3%)
+        if (difficulty == Difficulty.EASY) {
+            traderChance = 0.08; // 8% for EASY (increased from 5%)
+        }
+        
+        if (random.nextDouble() < traderChance) {
+            // Create and place a trader
+            wss.trader.Trader trader;
+            int traderType = random.nextInt(3);
+            
+            if (traderType == 0) {
+                trader = new wss.trader.FriendlyTrader();
+            } else if (traderType == 1) {
+                trader = new wss.trader.StrictTrader();
+            } else {
+                trader = new wss.trader.ImpatientTrader();
+            }
+            
+            square.setTrader(trader);
+        }
     }
 
     /**

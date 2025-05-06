@@ -23,8 +23,17 @@ public class ConservativeBrain extends Brain {
     
     @Override
     public void makeMove() {
+        System.out.println("ConservativeBrain is deciding what to do...");
+        
+        // Always check for and collect items first, regardless of other priorities
+        collectItems();
+        
+        // Check if there are any items in the neighboring squares
+        checkForNearbyItems();
+        
         // Check if we need to prioritize resources
         if (shouldPrioritizeResources()) {
+            System.out.println("Resources are low, prioritizing resource gathering");
             handleResourcePriority();
             return;
         }
@@ -32,56 +41,90 @@ public class ConservativeBrain extends Brain {
         // Otherwise look for easiest path east
         Path easiestEast = findEasiestEastPath();
         if (easiestEast != null && isPathFeasible(easiestEast)) {
-            
+            System.out.println("Moving along easiest eastward path");
             followPath(easiestEast);
             
+            // Make sure to collect items after moving
             Square currentSquare = map.getSquare(player.getX(), player.getY());
             currentSquare.collectItem(player);
-
         } else {
             // If no easy path east, rest to recover
+            System.out.println("No feasible eastward path, resting to recover");
             player.rest();
-
         }
     }
     
     private boolean shouldPrioritizeResources() {
-        return player.getCurrentFood() < player.getMaxFood() * 0.5 ||
-               player.getCurrentWater() < player.getMaxWater() * 0.5 ||
-               player.getCurrentMovement() < player.getMaxMovement() * 0.3;
+        // More conservative thresholds (increased from previous values)
+        return player.getCurrentFood() < player.getMaxFood() * 0.6 ||  // was 0.5
+               player.getCurrentWater() < player.getMaxWater() * 0.6 || // was 0.5
+               player.getCurrentMovement() < player.getMaxMovement() * 0.4; // was 0.3
     }
     
     private void handleResourcePriority() {
-        // Priority 1: Food if critically low
-        if (player.getCurrentFood() < player.getMaxFood() * 0.3) {
+        // Priority 1: Food if low
+        if (player.getCurrentFood() < player.getMaxFood() * 0.5) { // was 0.3
+            System.out.println("Food is low, looking for food sources");
             Path closestFood = player.getVision().closestFood(player, map);
             if (closestFood != null && isPathFeasible(closestFood)) {
+                System.out.println("Found food source, moving to collect");
                 followPath(closestFood);
                 return;
+            } else {
+                System.out.println("No accessible food source found");
             }
         }
         
-        // Priority 2: Water if critically low
-        if (player.getCurrentWater() < player.getMaxWater() * 0.3) {
+        // Priority 2: Water if low
+        if (player.getCurrentWater() < player.getMaxWater() * 0.5) { // was 0.3
+            System.out.println("Water is low, looking for water sources");
             Path closestWater = player.getVision().closestWater(player, map);
             if (closestWater != null && isPathFeasible(closestWater)) {
+                System.out.println("Found water source, moving to collect");
                 followPath(closestWater);
                 return;
+            } else {
+                System.out.println("No accessible water source found");
             }
         }
         
         // Priority 3: Rest if movement is low
-        if (player.getCurrentMovement() < player.getMaxMovement() * 0.5) {
+        if (player.getCurrentMovement() < player.getMaxMovement() * 0.6) { // was 0.5
+            System.out.println("Movement energy is low, resting to recover");
             player.rest();
             return;
         }
         
         // If resources are low but nothing nearby, try to move to easier terrain
+        System.out.println("Looking for path with least resource cost");
         Path easiestPath = player.getVision().easiestPath(player, map);
         if (easiestPath != null && isPathFeasible(easiestPath)) {
+            System.out.println("Found low-cost path, following it");
             followPath(easiestPath);
         } else {
+            System.out.println("No accessible paths found, resting");
             player.rest();
+        }
+    }
+    
+    // New method to check for items in neighboring squares
+    private void checkForNearbyItems() {
+        if (player.getCurrentFood() < player.getMaxFood() * 0.8) {
+            Path foodPath = player.getVision().closestFood(player, map);
+            if (foodPath != null && isPathFeasible(foodPath)) {
+                System.out.println("Found nearby food, moving to collect");
+                followPath(foodPath);
+                return;
+            }
+        }
+        
+        if (player.getCurrentWater() < player.getMaxWater() * 0.8) {
+            Path waterPath = player.getVision().closestWater(player, map);
+            if (waterPath != null && isPathFeasible(waterPath)) {
+                System.out.println("Found nearby water, moving to collect");
+                followPath(waterPath);
+                return;
+            }
         }
     }
     
