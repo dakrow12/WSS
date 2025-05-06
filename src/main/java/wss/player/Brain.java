@@ -1,93 +1,113 @@
 package wss.player;
 
 import wss.game.Map;
-import wss.game.*;
-import wss.items.*;
-import wss.trader.*;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Random;
+import wss.game.Path;
+import wss.game.Square;
+import wss.game.Direction;
+import wss.game.Position; // Often needed for map interactions
+import wss.items.Item;    // If Brain directly interacts with general items
+import wss.trader.Trader; // For trading logic
 
+import java.util.List; // If iterating over paths or directions
 
+/**
+ * Abstract class representing the decision-making logic for a Player.
+ * Subclasses will implement specific behaviors (e.g., greedy, cautious).
+ */
 public abstract class Brain {
     protected Player player;
     protected Map map;
-    
+
     public Brain(Player player, Map map) {
         this.player = player;
         this.map = map;
     }
-    
+
     public abstract void makeMove();
-    
+
     protected void movePlayer(Direction direction) {
-        if (player.canMove(direction)) {
-            player.move(direction, map.getGrid());
-            collectItems();
-            checkTrader();
+        if (player == null || direction == null || map == null || map.getGrid() == null) {
+            System.err.println("Error in Brain.movePlayer: Null parameter detected.");
+            if (player != null) player.rest(); // Rest if critical components are missing for a move
+            return;
+        }
+
+        if (player.move(direction, map.getGrid())) {
+            collectItems(); // Collect items on the new square
+            checkTrader();  // Check for traders on the new square
         } else {
-            player.rest(); // If can't move, rest instead
+            // If move failed (e.g., insufficient resources, blocked path, out of bounds handled by player.move)
+            player.rest(); 
         }
     }
-    
+
+    /**
+     * Triggers item collection for all items on the player's current square.
+     */
     protected void collectItems() {
-        // Collect all items in current square
-        Square currentSquare = map.getSquare(player.getPosition());
-        List<Item> items = new ArrayList<>(currentSquare.getItems()); // Create a copy to prevent concurrent modification
-        
-        if (!items.isEmpty()) {
-            System.out.println("Found items at position (" + player.getX() + ", " + player.getY() + "):");
-            
-            for (Item item : items) {
-                String itemName = item.getClass().getSimpleName();
-                System.out.println("- " + itemName);
-                // We don't need to call player.collect() here as the Square.collectItem will activate the items
-            }
-            
-            // Use the Square's collectItem method to properly handle items
-            currentSquare.collectItem(player);
-            System.out.println("Resources after collection: Food=" + player.getCurrentFood() + 
-                             ", Water=" + player.getCurrentWater() + 
-                             ", Gold=" + player.getCurrentGold());
+        if (player == null || map == null) return;
+        Position playerPos = player.getPosition();
+        if (playerPos == null) return;
+
+        Square currentSquare = map.getSquare(playerPos);
+        if (currentSquare != null) {
+            // The Square.collectItem(Player) method handles activating and removing items.
+            currentSquare.collectItem(player); 
         }
     }
-    
+
     protected void checkTrader() {
-        Square currentSquare = map.getSquare(player.getPosition());
-        if (currentSquare.hasTrader()) {
+        if (player == null || map == null) return;
+        Position playerPos = player.getPosition();
+        if (playerPos == null) return;
+
+        Square currentSquare = map.getSquare(playerPos);
+        if (currentSquare != null && currentSquare.hasTrader()) {
             Trader trader = currentSquare.getTrader();
-            if (shouldTradeWith(trader)) {
+            if (trader != null && shouldTradeWith(trader)) {
                 initiateTrade(trader);
             }
         }
     }
 
-protected boolean isPathFeasible(Path path) {
-    return path.getTotalMovementCost() <= player.getCurrentMovement() &&
-           path.getTotalFoodCost() <= player.getCurrentFood() &&
-           path.getTotalWaterCost() <= player.getCurrentWater();
-}
+    protected boolean isPathFeasible(Path path) {
+        if (player == null || path == null) {
+            return false;
+        }
+        return path.getTotalMovementCost() <= player.getCurrentStrength() &&
+               path.getTotalFoodCost() <= player.getCurrentFood() &&
+               path.getTotalWaterCost() <= player.getCurrentWater();
+    }
 
-protected void followPath(Path path) {
-    for (Direction dir : path.getSteps()) {
-        if (player.canMove(dir)) {
-            player.move(dir, map.getGrid());
-        } else {
-            break;
+    protected void followPath(Path path) {
+        if (player == null || path == null || path.getDirections() == null || map == null || map.getGrid() == null) {
+            return;
+        }
+        for (Direction dir : path.getDirections()) { // Path.java should have getDirections() or getSteps()
+            if (dir == null) continue;
+            
+            // Store current state to see if movePlayer actually moved or just rested.
+            Position posBeforeStep = player.getPosition();
+            movePlayer(dir);
+            Position posAfterStep = player.getPosition();
+
+            // If player didn't move (e.g. rested due to failed move), then break path following.
+            if (posBeforeStep.equals(posAfterStep) && !player.move(dir, map.getGrid())) { // Double check if stuck
+                 break; // Can't continue path
+            }
+           
         }
     }
-}
-
     
     protected abstract boolean shouldTradeWith(Trader trader);
+
     protected abstract void initiateTrade(Trader trader);
     
     protected boolean isCriticalResourceLevel() {
-        return player.getCurrentFood() < player.getMaxFood() * 0.2 ||
-               player.getCurrentWater() < player.getMaxWater() * 0.2;
-    }
-    
-    public Map getMap() {
-        return map;
+        if (player == null) return true; // Assume critical if player is null
+        // Using a threshold (e.g., 20% of max) to define "critical"
+        boolean foodCritical = player.getCurrentFood() < player.getMaxFood() * 0.2;
+        boolean waterCritical = player.getCurrentWater() < player.getMaxWater() * 0.2;
+        return foodCritical || waterCritical;
     }
 }
