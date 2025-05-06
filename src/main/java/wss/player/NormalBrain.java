@@ -35,8 +35,7 @@ public class NormalBrain extends Brain {
             handleResourceGathering();
         } else {
             moveTowardEast();
-            Square currentSquare = map.getSquare(player.getX(), player.getY());
-            currentSquare.collectItem(player);
+
 
         }
     }
