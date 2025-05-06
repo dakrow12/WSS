@@ -32,7 +32,12 @@ public class ConservativeBrain extends Brain {
         // Otherwise look for easiest path east
         Path easiestEast = findEasiestEastPath();
         if (easiestEast != null && isPathFeasible(easiestEast)) {
+            
             followPath(easiestEast);
+            
+            Square currentSquare = map.getSquare(player.getX(), player.getY());
+            currentSquare.collectItem(player);
+
         } else {
             // If no easy path east, rest to recover
             player.rest();
