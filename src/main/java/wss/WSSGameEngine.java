@@ -3,6 +3,9 @@ package wss;
 import wss.game.*;
 import wss.items.*;
 import wss.player.*;
+import wss.trader.Trader;
+import wss.trader.TraderType;
+
 
 public class WSSGameEngine {
     private Map map;
@@ -15,16 +18,32 @@ public class WSSGameEngine {
         this.map = new Map();
         map.generateMap(width, height, wss.game.Difficulty.valueOf(difficulty.name()));
         
+
+	// Add early water sources
+	map.getSquare(1, 0).addItem(new WaterBonus(3, false));
+	map.getSquare(2, 1).addItem(new WaterBonus(4, false));
+	map.getSquare(3, 0).addItem(new WaterBonus(2, false));
+
+	// Add early food bonuses
+	map.getSquare(2, 0).addItem(new FoodBonus(4, true));  // repeating = survival help
+	map.getSquare(3, 1).addItem(new FoodBonus(2, false));
+
+
+	// Add early traders
+	map.getSquare(2, 0).setTrader(new Trader(TraderType.FAIR));
+
+
+
         // Adjust starting resources based on difficulty
-        int startingFood = 10;
-        int startingWater = 10;
-        int startingStrength = 10;
+        int startingFood = 15;
+        int startingWater = 15;
+        int startingStrength = 12;
         
         switch (difficulty) {
             case EASY:
-                startingFood = 15;
-                startingWater = 15;
-                startingStrength = 12;
+                startingFood = 20;
+                startingWater = 20;
+                startingStrength = 15;
                 break;
             case MEDIUM:
                 // Default values
