@@ -31,6 +31,9 @@ public class GreedBrain extends Brain {
             followPath(closestGold);
         } else {
             moveEastOrRandom();
+            Square currentSquare = map.getSquare(player.getX(), player.getY());
+            currentSquare.collectItem(player);
+
         }
     }
     
