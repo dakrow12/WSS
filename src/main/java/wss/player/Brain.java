@@ -32,10 +32,9 @@ public abstract class Brain {
     
     protected void collectItems() {
         // Collect all items in current square
-        Square currentSquare = map.getSquare(player.getPosition());
-        for (Item item : currentSquare.getItems()) {
-            player.collect(item);
-        }
+        Square currentSquare = map.getSquare(player.getX(), player.getY());
+        currentSquare.collectItem(player);
+
     }
     
     protected void checkTrader() {
