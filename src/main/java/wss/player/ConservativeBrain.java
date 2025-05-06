@@ -36,6 +36,9 @@ public class ConservativeBrain extends Brain {
         } else {
             // If no easy path east, rest to recover
             player.rest();
+            Square currentSquare = map.getSquare(player.getX(), player.getY());
+            currentSquare.collectItem(player);
+
         }
     }
     
