@@ -13,7 +13,6 @@ public class Square {
     private int movementCost;
     private int waterCost;
     private int foodCost;
-    private Item item; // optional single-item support
     private List<Item> items;
     private Trader trader;
 
@@ -22,7 +21,6 @@ public class Square {
         this.movementCost = movementCost;
         this.waterCost = waterCost;
         this.foodCost = foodCost;
-        this.item = null;
         this.items = new ArrayList<>();
     }
 
@@ -31,8 +29,14 @@ public class Square {
     public int getWaterCost() { return waterCost; }
     public int getFoodCost() { return foodCost; }
 
-    public void setItem(Item item) { this.item = item; }
-    public Item getItem() { return item; }
+    public void setItem(Item item) { 
+        this.items.clear();
+        this.items.add(item);
+    }
+    
+    public Item getItem() { 
+        return items.isEmpty() ? null : items.get(0);
+    }
 
     public void addItem(Item item) { this.items.add(item); }
     public void removeItem(Item item) { this.items.remove(item); }
@@ -40,10 +44,37 @@ public class Square {
     public List<Item> getItems() { return items; }
 
     public void collectItem(Player player) {
+        if (items.isEmpty()) {
+            return;
+        }
+        
+        System.out.println("Collecting items from " + terrain + " square:");
+        
         Iterator<Item> it = items.iterator();
         while (it.hasNext()) {
             Item currentItem = it.next();
+            
+            // Store resource values before activation to calculate the difference
+            int beforeFood = player.getCurrentFood();
+            int beforeWater = player.getCurrentWater();
+            int beforeGold = player.getCurrentGold();
+            
+            // Activate the item
             currentItem.activate(player);
+            
+            // Calculate and display the changes
+            int foodDiff = player.getCurrentFood() - beforeFood;
+            int waterDiff = player.getCurrentWater() - beforeWater;
+            int goldDiff = player.getCurrentGold() - beforeGold;
+            
+            System.out.println("- " + currentItem.getClass().getSimpleName() + 
+                             (currentItem.isRepeating() ? " (repeating)" : "") + 
+                             " effect: " + 
+                             (foodDiff > 0 ? "+" + foodDiff + " food, " : "") + 
+                             (waterDiff > 0 ? "+" + waterDiff + " water, " : "") + 
+                             (goldDiff > 0 ? "+" + goldDiff + " gold" : ""));
+            
+            // Remove non-repeating items
             if (!currentItem.isRepeating()) {
                 it.remove();
             }

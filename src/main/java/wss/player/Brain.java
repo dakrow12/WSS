@@ -32,9 +32,24 @@ public abstract class Brain {
     
     protected void collectItems() {
         // Collect all items in current square
-        Square currentSquare = map.getSquare(player.getX(), player.getY());
-        currentSquare.collectItem(player);
-
+        Square currentSquare = map.getSquare(player.getPosition());
+        List<Item> items = new ArrayList<>(currentSquare.getItems()); // Create a copy to prevent concurrent modification
+        
+        if (!items.isEmpty()) {
+            System.out.println("Found items at position (" + player.getX() + ", " + player.getY() + "):");
+            
+            for (Item item : items) {
+                String itemName = item.getClass().getSimpleName();
+                System.out.println("- " + itemName);
+                // We don't need to call player.collect() here as the Square.collectItem will activate the items
+            }
+            
+            // Use the Square's collectItem method to properly handle items
+            currentSquare.collectItem(player);
+            System.out.println("Resources after collection: Food=" + player.getCurrentFood() + 
+                             ", Water=" + player.getCurrentWater() + 
+                             ", Gold=" + player.getCurrentGold());
+        }
     }
     
     protected void checkTrader() {
@@ -70,5 +85,9 @@ protected void followPath(Path path) {
     protected boolean isCriticalResourceLevel() {
         return player.getCurrentFood() < player.getMaxFood() * 0.2 ||
                player.getCurrentWater() < player.getMaxWater() * 0.2;
+    }
+    
+    public Map getMap() {
+        return map;
     }
 }

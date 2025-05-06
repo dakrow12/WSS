@@ -70,26 +70,24 @@ public class Main {
         // Step 2: Place a FoodBonus east of the start
         grid[1][0].setItem(new FoodBonus(5, false));
 
-        // Step 3: Create a player with vision/brain
+        // Step 3: Create a map, player, and brain without circular dependencies
+        Map map = new Map();
+        map.setGrid(grid);
+        
+        // First create the player with null brain
         Vision vision = new Cautious();
-        Map map = new Map(); // use correct constructor
-map.setGrid(grid);   // or however you inject the grid
+        Player player = new Player(10, 10, 10, vision, null);
+        
+        // Then create the brain with the player
+        Brain brain = new ConservativeBrain(player, map);
+        
+        // Finally set the brain on the player
+        player.setBrain(brain);
 
-
-
-	Brain brain = new ConservativeBrain(null, map);
-
-        Player player = new Player(10, 10, 10, vision, brain);
-	
-	brain = new ConservativeBrain(player, map);
-	
-	player.setBrain(brain);
-
-
+        // Step 4: Display and make move
         System.out.println("Starting position: (" + player.getX() + ", " + player.getY() + ")");
         System.out.println("Food: " + player.getCurrentFood());
 
-        // Step 4: Let the brain make a move
         brain.makeMove();
 
         System.out.println("After move: (" + player.getX() + ", " + player.getY() + ")");
