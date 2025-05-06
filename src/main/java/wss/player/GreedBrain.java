@@ -29,6 +29,9 @@ public class GreedBrain extends Brain {
         Path closestGold = player.getVision().closestGold(player, map);
         if (closestGold != null && isPathFeasible(closestGold)) {
             followPath(closestGold);
+
+            Square currentSquare = map.getSquare(player.getX(), player.getY());
+            currentSquare.collectItem(player);
         } else {
             moveEastOrRandom();
             Square currentSquare = map.getSquare(player.getX(), player.getY());
