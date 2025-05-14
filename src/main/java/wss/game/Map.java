@@ -108,14 +108,18 @@ public void setGrid(Square[][] grid) {
         // Adjust terrain probabilities based on the game's difficulty
         switch (difficulty) {
             case EASY:
-                plainsProbability = 0.7;
-                forestProbability = 0.2;
+                mountainProbability = 0.4;
+                desertProbability = 0.2;
+                swampProbability = 0.15;
+                forestProbability = 0.15;
+                plainsProbability = 0.1;
                 break;
             case MEDIUM:
-                plainsProbability = 0.4;
-                mountainProbability = 0.15;
-                desertProbability = 0.15;
-                forestProbability = 0.2;
+                mountainProbability = 0.3;
+                desertProbability = 0.25;
+                swampProbability = 0.2;
+                forestProbability = 0.15;
+                plainsProbability = 0.1;
                 break;
             case HARD:
                 mountainProbability = 0.25;
