@@ -79,6 +79,9 @@ public class Map {
                 placeItem(grid[x][y], difficulty, random); // Potentially place an item on this square
             }
         }
+        
+        // Place traders after all squares are created
+        placeTraders(difficulty, random);
     }
 
 
@@ -115,17 +118,19 @@ public void setGrid(Square[][] grid) {
                 plainsProbability = 0.1;
                 break;
             case MEDIUM:
-                mountainProbability = 0.3;
-                desertProbability = 0.25;
-                swampProbability = 0.2;
+                // New MEDIUM difficulty between EASY and previous MEDIUM (now HARD)
+                mountainProbability = 0.35;
+                desertProbability = 0.22;
+                swampProbability = 0.17;
                 forestProbability = 0.15;
                 plainsProbability = 0.1;
                 break;
             case HARD:
-                mountainProbability = 0.25;
+                // Use previous MEDIUM terrain distribution
+                mountainProbability = 0.3;
                 desertProbability = 0.25;
                 swampProbability = 0.2;
-                forestProbability = 0.2;
+                forestProbability = 0.15;
                 plainsProbability = 0.1;
                 break;
         }
@@ -215,16 +220,16 @@ public void setGrid(Square[][] grid) {
         // Implementation of item placement logic based on difficulty and terrain
         double itemChance = 0.0;
         
-        // Set base chance based on difficulty - increase frequencies
+        // Set base chance based on difficulty
         switch (difficulty) {
             case EASY:
-                itemChance = 0.35; // 35% chance for EASY (was 15%)
+                itemChance = 0.40; // 40% chance
                 break;
             case MEDIUM:
-                itemChance = 0.25; // 25% chance for MEDIUM (was 10%)
+                itemChance = 0.39; // Between EASY and previous MEDIUM (now HARD)
                 break;
             case HARD:
-                itemChance = 0.15; // 15% chance for HARD (was 7%)
+                itemChance = 0.38; // Previous MEDIUM chance, should give ~50% win rate
                 break;
         }
         
@@ -232,65 +237,180 @@ public void setGrid(Square[][] grid) {
         if (random.nextDouble() < itemChance) {
             String terrain = square.getTerrain();
             
+            // Terrain-specific multipliers for difficulty levels
+            double quantityMultiplier = 1.0;
+            if (difficulty == Difficulty.MEDIUM) {
+                quantityMultiplier = 1.15; // 15% more resources on new MEDIUM
+            } else if (difficulty == Difficulty.HARD) {
+                quantityMultiplier = 1.2; // Previous MEDIUM multiplier (20%)
+            }
+            
             // Logic for placing specific items based on terrain
             if (terrain.equals("plains")) {
                 // Plains have more food
                 if (random.nextDouble() < 0.6) {
-                    square.addItem(new wss.items.FoodBonus(3, false));
+                    int foodAmount = (int)(4 * quantityMultiplier);
+                    square.addItem(new wss.items.FoodBonus(foodAmount, false));
                 } else {
-                    square.addItem(new wss.items.WaterBonus(2, false));
+                    int waterAmount = (int)(3 * quantityMultiplier);
+                    square.addItem(new wss.items.WaterBonus(waterAmount, false));
                 }
             } else if (terrain.equals("forest")) {
                 // Forests have more food and sometimes gold
-                if (random.nextDouble() < 0.6) {  // increased from 0.5
-                    square.addItem(new wss.items.FoodBonus(4, false));
-                } else if (random.nextDouble() < 0.4) {  // increased from 0.3
-                    square.addItem(new wss.items.GoldBonus(1, false));
+                if (random.nextDouble() < 0.6) {
+                    int foodAmount = (int)(5 * quantityMultiplier);
+                    square.addItem(new wss.items.FoodBonus(foodAmount, false));
+                } else if (random.nextDouble() < 0.5) {
+                    square.addItem(new wss.items.GoldBonus(2, false));
+                } else {
+                    int waterAmount = (int)(3 * quantityMultiplier);
+                    square.addItem(new wss.items.WaterBonus(waterAmount, false));
                 }
             } else if (terrain.equals("mountain")) {
                 // Mountains have gold and some water
                 if (random.nextDouble() < 0.7) {
-                    square.addItem(new wss.items.GoldBonus(2, false));
+                    square.addItem(new wss.items.GoldBonus(3, false));
                 } else {
-                    square.addItem(new wss.items.WaterBonus(3, false));  // added water to mountains
+                    int waterAmount = (int)(4 * quantityMultiplier);
+                    square.addItem(new wss.items.WaterBonus(waterAmount, false));
                 }
             } else if (terrain.equals("desert")) {
                 // Desert has little resources but more valuable
-                if (random.nextDouble() < 0.3) {
+                if (random.nextDouble() < 0.4) {
                     square.addItem(new wss.items.GoldBonus(3, false));
-                } else if (random.nextDouble() < 0.2) {  // added food to desert
-                    square.addItem(new wss.items.FoodBonus(5, false));  // more valuable food in desert
+                } else if (random.nextDouble() < 0.3) {
+                    int foodAmount = (int)(6 * quantityMultiplier);
+                    square.addItem(new wss.items.FoodBonus(foodAmount, false));
+                } else {
+                    // For MEDIUM difficulty, add more frequently repeating water sources
+                    boolean repeating = random.nextDouble() < 0.3 || difficulty == Difficulty.MEDIUM;
+                    int waterAmount = (int)(3 * quantityMultiplier);
+                    square.addItem(new wss.items.WaterBonus(waterAmount, repeating));
                 }
             } else if (terrain.equals("swamp")) {
                 // Swamps have water and sometimes food
-                if (random.nextDouble() < 0.8) {  // increased from 0.7
-                    square.addItem(new wss.items.WaterBonus(3, true)); // Repeating water source
+                if (random.nextDouble() < 0.8) {
+                    // Higher chance of repeating water sources for MEDIUM
+                    boolean repeating = random.nextDouble() < 0.4 || difficulty == Difficulty.MEDIUM;
+                    int waterAmount = (int)(4 * quantityMultiplier);
+                    square.addItem(new wss.items.WaterBonus(waterAmount, repeating));
+                } else if (random.nextDouble() < 0.6) {
+                    int foodAmount = (int)(3 * quantityMultiplier);
+                    square.addItem(new wss.items.FoodBonus(foodAmount, false));
                 } else {
-                    square.addItem(new wss.items.FoodBonus(2, false));
+                    square.addItem(new wss.items.GoldBonus(2, false));
+                }
+            }
+            
+            // Small chance for additional item on any terrain - adjusted for difficulties
+            double additionalItemChance = 0.10;
+            if (difficulty == Difficulty.MEDIUM) {
+                additionalItemChance = 0.125; // Between base and previous MEDIUM
+            } else if (difficulty == Difficulty.HARD) {
+                additionalItemChance = 0.15; // Previous MEDIUM chance
+            }
+            
+            if (random.nextDouble() < additionalItemChance) {
+                if (random.nextDouble() < 0.4) {
+                    int foodAmount = (int)(2 * quantityMultiplier);
+                    square.addItem(new wss.items.FoodBonus(foodAmount, false));
+                } else if (random.nextDouble() < 0.7) {
+                    int waterAmount = (int)(2 * quantityMultiplier);
+                    square.addItem(new wss.items.WaterBonus(waterAmount, false));
+                } else {
+                    square.addItem(new wss.items.GoldBonus(1, false));
                 }
             }
         }
         
-        // Add traders with lower probability
-        double traderChance = 0.05; // 5% base chance (increased from 3%)
-        if (difficulty == Difficulty.EASY) {
-            traderChance = 0.08; // 8% for EASY (increased from 5%)
+        // We'll handle trader placement separately in generateMap method
+    }
+
+    /**
+     * Places traders randomly on the map based on the total number of tiles.
+     * 
+     * @param difficulty The difficulty level affecting trader frequency
+     * @param random A Random object for generating random numbers
+     */
+    private void placeTraders(Difficulty difficulty, Random random) {
+        // Calculate number of traders based on map size
+        int totalTiles = width * height;
+        double traderPercentage = 0.0;
+        
+        // Set percentage based on difficulty
+        switch (difficulty) {
+            case EASY:
+                traderPercentage = 0.10; // 10% of tiles have traders
+                break;
+            case MEDIUM:
+                traderPercentage = 0.095; // Between EASY and previous MEDIUM (now HARD)
+                break;
+            case HARD:
+                traderPercentage = 0.09; // Previous MEDIUM percentage
+                break;
         }
         
-        if (random.nextDouble() < traderChance) {
-            // Create and place a trader
-            wss.trader.Trader trader;
-            int traderType = random.nextInt(3);
+        int numTraders = (int)(totalTiles * traderPercentage);
+        // Ensure minimum traders based on difficulty
+        numTraders = Math.max(numTraders, difficulty == Difficulty.HARD ? 5 : 
+                                  (difficulty == Difficulty.MEDIUM ? 4 : 3));
+        
+        System.out.println("Placing " + numTraders + " traders on map...");
+        
+        // First, guaranteed place 1-2 traders in the western third of the map
+        int westernThird = Math.max(1, width / 3);
+        int tradersPlacedWest = 0;
+        int maxWesternTraders = Math.min(2, numTraders - 1); // Ensure at least 1 trader elsewhere
+        
+        while (tradersPlacedWest < maxWesternTraders) {
+            int x = random.nextInt(westernThird); // Western third only
+            int y = random.nextInt(height);
             
-            if (traderType == 0) {
-                trader = new wss.trader.FriendlyTrader();
-            } else if (traderType == 1) {
-                trader = new wss.trader.StrictTrader();
-            } else {
-                trader = new wss.trader.ImpatientTrader();
+            if (!grid[x][y].hasTrader()) {
+                wss.trader.TraderType traderType = getRandomTraderType(random);
+                grid[x][y].setTrader(new wss.trader.Trader(traderType));
+                System.out.println("Placed " + traderType + " trader at western area (" + x + ", " + y + ")");
+                tradersPlacedWest++;
             }
+        }
+        
+        // Now place the remaining traders randomly across the map
+        int remainingTraders = numTraders - tradersPlacedWest;
+        for (int i = 0; i < remainingTraders; i++) {
+            int x, y;
+            int attempts = 0;
+            boolean placed = false;
             
-            square.setTrader(trader);
+            // Try to place trader, with a limit on attempts
+            while (!placed && attempts < 50) {
+                x = random.nextInt(width);
+                y = random.nextInt(height);
+                
+                if (!grid[x][y].hasTrader()) {
+                    wss.trader.TraderType traderType = getRandomTraderType(random);
+                    grid[x][y].setTrader(new wss.trader.Trader(traderType));
+                    System.out.println("Placed " + traderType + " trader at (" + x + ", " + y + ")");
+                    placed = true;
+                }
+                attempts++;
+            }
+        }
+    }
+    
+    /**
+     * Helper method to get a random trader type
+     */
+    private wss.trader.TraderType getRandomTraderType(Random random) {
+        int typeRoll = random.nextInt(4);
+        switch (typeRoll) {
+            case 0:
+                return wss.trader.TraderType.FAIR;
+            case 1:
+                return wss.trader.TraderType.GREEDY;
+            case 2:
+                return wss.trader.TraderType.CAUTIOUS;
+            default:
+                return wss.trader.TraderType.GENEROUS;
         }
     }
 

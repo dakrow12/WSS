@@ -26,8 +26,7 @@ public int getGoldRequested() { return requestGold; }
 
 
 public boolean hasOffer() {
-    return offerFood > 0 || offerWater > 0 || offerGold > 0 ||
-           requestFood > 0 || requestWater > 0 || requestGold > 0;
+    return isValid();
 }
 
 
@@ -47,21 +46,61 @@ public TradeOffer() {
 
 	// Ensure something is being traded
 	public boolean isValid() {
-		return (
-				offerGold > 0 ||
-				offerFood > 0 ||
-				offerWater > 0 ||
-				requestGold > 0 ||
-				requestFood > 0 ||
-				requestWater > 0
-				);
+		// At least one thing must be offered and one thing requested
+		boolean somethingOffered = offerGold > 0 || offerFood > 0 || offerWater > 0;
+		boolean somethingRequested = requestGold > 0 || requestFood > 0 || requestWater > 0;
+		return somethingOffered && somethingRequested;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("Offer(G:%d, F:%d, W:%d) for Request(G:%d, F:%d, W:%d)",
-				offerGold, offerFood, offerWater,
-				requestGold, requestFood, requestWater);
+		StringBuilder sb = new StringBuilder();
+		sb.append("TradeOffer[");
+		
+		// Offering
+		sb.append("Offering: ");
+		boolean hasOffering = false;
+		if (offerGold > 0) {
+			sb.append(offerGold).append(" gold");
+			hasOffering = true;
+		}
+		if (offerFood > 0) {
+			if (hasOffering) sb.append(", ");
+			sb.append(offerFood).append(" food");
+			hasOffering = true;
+		}
+		if (offerWater > 0) {
+			if (hasOffering) sb.append(", ");
+			sb.append(offerWater).append(" water");
+			hasOffering = true;
+		}
+		if (!hasOffering) {
+			sb.append("nothing");
+		}
+		
+		// Requesting
+		sb.append("; Requesting: ");
+		boolean hasRequest = false;
+		if (requestGold > 0) {
+			sb.append(requestGold).append(" gold");
+			hasRequest = true;
+		}
+		if (requestFood > 0) {
+			if (hasRequest) sb.append(", ");
+			sb.append(requestFood).append(" food");
+			hasRequest = true;
+		}
+		if (requestWater > 0) {
+			if (hasRequest) sb.append(", ");
+			sb.append(requestWater).append(" water");
+			hasRequest = true;
+		}
+		if (!hasRequest) {
+			sb.append("nothing");
+		}
+		
+		sb.append("]");
+		return sb.toString();
 	}
 
 

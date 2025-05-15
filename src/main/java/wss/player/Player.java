@@ -60,8 +60,8 @@ public class Player {
     public void rest() {
         System.out.println("Player is resting to recover strength");
         
-        // Recover strength
-        currentStrength = Math.min(maxStrength, currentStrength + 2);
+        // Recover strength - Increased from +2 to +4
+        currentStrength = Math.min(maxStrength, currentStrength + 4);
         
         // Resting consumes less resources
         // Already handled by WSSGameEngine, so we don't consume here
@@ -125,12 +125,20 @@ public class Player {
 
     public boolean finalizeTrade(TradeOffer offer) {
         if (!canAffordOffer(offer)) return false;
+        
+        // Update player resources
         currentGold -= offer.offerGold;
         currentFood -= offer.offerFood;
         currentWater -= offer.offerWater;
         currentGold += offer.requestGold;
         currentFood = Math.min(currentFood + offer.requestFood, maxFood);
         currentWater = Math.min(currentWater + offer.requestWater, maxWater);
+        
+        // Track successful trade in statistics
+        if (brain != null && brain.getGameEngine() != null) {
+            brain.getGameEngine().trackSuccessfulTrade();
+        }
+        
         return true;
     }
 

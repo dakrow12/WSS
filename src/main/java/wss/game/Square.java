@@ -7,6 +7,7 @@ import wss.items.Item;
 import wss.items.FoodBonus;
 import wss.player.Player;
 import wss.trader.Trader;
+import wss.util.GameLogger;
 
 public class Square {
     private String terrain;
@@ -48,7 +49,8 @@ public class Square {
             return;
         }
         
-        System.out.println("Collecting items from " + terrain + " square:");
+        GameLogger.section("Item Collection");
+        GameLogger.info("Collecting items from " + terrain + " square");
         
         Iterator<Item> it = items.iterator();
         while (it.hasNext()) {
@@ -67,18 +69,26 @@ public class Square {
             int waterDiff = player.getCurrentWater() - beforeWater;
             int goldDiff = player.getCurrentGold() - beforeGold;
             
-            System.out.println("- " + currentItem.getClass().getSimpleName() + 
-                             (currentItem.isRepeating() ? " (repeating)" : "") + 
-                             " effect: " + 
-                             (foodDiff > 0 ? "+" + foodDiff + " food, " : "") + 
-                             (waterDiff > 0 ? "+" + waterDiff + " water, " : "") + 
-                             (goldDiff > 0 ? "+" + goldDiff + " gold" : ""));
+            String itemName = currentItem.getClass().getSimpleName();
+            String effect = 
+                (foodDiff > 0 ? "+" + foodDiff + " food " : "") + 
+                (waterDiff > 0 ? "+" + waterDiff + " water " : "") + 
+                (goldDiff > 0 ? "+" + goldDiff + " gold" : "");
+            
+            GameLogger.itemCollection(
+                itemName + (currentItem.isRepeating() ? " (repeating)" : ""),
+                effect.trim()
+            );
             
             // Remove non-repeating items
             if (!currentItem.isRepeating()) {
                 it.remove();
             }
         }
+        
+        GameLogger.info("Resources after collection: Food=" + player.getCurrentFood() + 
+                        ", Water=" + player.getCurrentWater() + 
+                        ", Gold=" + player.getCurrentGold());
     }
 
     public boolean hasFoodBonus() {
@@ -95,10 +105,12 @@ public class Square {
     }
 
     public Trader getTrader() {
+        GameLogger.info("Getting trader: " + (trader != null ? trader.getPersonality() : "null"));
         return trader;
     }
 
     public void setTrader(Trader t) {
         this.trader = t;
+        GameLogger.info("Trader set: " + (t != null ? t.getPersonality() : "null"));
     }
 }

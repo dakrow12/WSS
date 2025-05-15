@@ -12,6 +12,8 @@ import wss.game.Square;
 import wss.trader.Trader;
 import wss.trader.TradeOffer;
 import wss.trader.TradeResponse;
+import wss.WSSGameEngine;
+import wss.game.Position;
 
 
 
@@ -21,12 +23,21 @@ public class ConservativeBrain extends Brain {
         super(player, map);
     }
     
+    public ConservativeBrain(Player player, Map map, WSSGameEngine gameEngine) {
+        super(player, map, gameEngine);
+    }
+    
     @Override
     public void makeMove() {
         System.out.println("ConservativeBrain is deciding what to do...");
         
         // Always check for and collect items first, regardless of other priorities
         collectItems();
+        
+        // Check for nearby traders - conservative brains value trading
+        if (checkForNearbyTrader()) {
+            return; // Trader interaction handled
+        }
         
         // Check if there are any items in the neighboring squares
         checkForNearbyItems();
@@ -190,44 +201,147 @@ if (player.getCurrentWater() < player.getMaxWater() * 0.5) {
     
     @Override
     protected boolean shouldTradeWith(Trader trader) {
-        // Always willing to trade to balance resources
+        // Always willing to trade - conservative players value having resources
+        System.out.println("ConservativeBrain: Should trade with " + trader.getPersonality() + " trader? YES");
         return true;
     }
     
     @Override
     protected void initiateTrade(Trader trader) {
+        System.out.println("Creating a trade offer for " + trader.getPersonality() + " trader");
         TradeOffer offer = new TradeOffer();
+        boolean offerCreated = false;
         
         // Try to balance resources
         if (player.getCurrentFood() > player.getMaxFood() * 0.7 && 
             player.getCurrentWater() < player.getMaxWater() * 0.5) {
             // Trade excess food for water
-            offer.setFoodOffered((int)(player.getCurrentFood() - player.getMaxFood() * 0.5));
-            offer.setWaterRequested(offer.getFoodOffered() * 2);
+            int foodToOffer = (int)(player.getCurrentFood() - player.getMaxFood() * 0.5);
+            if (foodToOffer > 0) {
+                offer.setFoodOffered(foodToOffer);
+                offer.setWaterRequested(foodToOffer);
+                System.out.println("Offering " + foodToOffer + " food for " + foodToOffer + " water");
+                offerCreated = true;
+            }
         } 
         else if (player.getCurrentWater() > player.getMaxWater() * 0.7 &&
                 player.getCurrentFood() < player.getMaxFood() * 0.5) {
             // Trade excess water for food
-            offer.setWaterOffered((int)(player.getCurrentWater() - player.getMaxWater() * 0.5));
-            offer.setFoodRequested(offer.getWaterOffered() * 2);
+            int waterToOffer = (int)(player.getCurrentWater() - player.getMaxWater() * 0.5);
+            if (waterToOffer > 0) {
+                offer.setWaterOffered(waterToOffer);
+                offer.setFoodRequested(waterToOffer);
+                System.out.println("Offering " + waterToOffer + " water for " + waterToOffer + " food");
+                offerCreated = true;
+            }
         }
         else if (player.getCurrentGold() > 5 && 
                 (player.getCurrentFood() < player.getMaxFood() * 0.5 ||
-                 player.getCurrentWater() < player.getMaxWater() * 0.5)) {
+                player.getCurrentWater() < player.getMaxWater() * 0.5)) {
             // Trade gold for needed resources
-            offer.setGoldOffered(player.getCurrentGold() / 2);
-            if (player.getCurrentFood() < player.getMaxFood() * 0.5) {
-                offer.setFoodRequested(offer.getGoldOffered() * 3);
-            } else {
-                offer.setWaterRequested(offer.getGoldOffered() * 3);
+            int goldToOffer = player.getCurrentGold() / 2;
+            if (goldToOffer > 0) {
+                offer.setGoldOffered(goldToOffer);
+                if (player.getCurrentFood() < player.getMaxFood() * 0.5) {
+                    offer.setFoodRequested(goldToOffer);
+                    System.out.println("Offering " + goldToOffer + " gold for " + goldToOffer + " food");
+                } else {
+                    offer.setWaterRequested(goldToOffer);
+                    System.out.println("Offering " + goldToOffer + " gold for " + goldToOffer + " water");
+                }
+                offerCreated = true;
+            }
+        }
+        // Default case: just trade 1 gold for some water
+        else if (player.getCurrentGold() >= 1) {
+            offer.setGoldOffered(1);
+            offer.setWaterRequested(1);
+            System.out.println("Default offer: 1 gold for 1 water");
+            offerCreated = true;
+        }
+        
+        // Fallback: if no trade has been created yet, create a basic trade based on what resources we have
+        if (!offerCreated) {
+            // Fallback 1: If we have some food, offer a small amount for water
+            if (player.getCurrentFood() > 5) {
+                offer.setFoodOffered(2);
+                offer.setWaterRequested(2);
+                System.out.println("Fallback offer: 2 food for 2 water");
+                offerCreated = true;
+            } 
+            // Fallback 2: If we have some water, offer a small amount for food
+            else if (player.getCurrentWater() > 5) {
+                offer.setWaterOffered(2);
+                offer.setFoodRequested(2);
+                System.out.println("Fallback offer: 2 water for 2 food");
+                offerCreated = true;
+            }
+            // Fallback 3: Last resort - offer 1 of whatever we have more of
+            else {
+                if (player.getCurrentFood() > player.getCurrentWater()) {
+                    offer.setFoodOffered(1);
+                    offer.setWaterRequested(1);
+                    System.out.println("Emergency offer: 1 food for 1 water");
+                } else {
+                    offer.setWaterOffered(1);
+                    offer.setFoodRequested(1);
+                    System.out.println("Emergency offer: 1 water for 1 food");
+                }
+                offerCreated = true;
             }
         }
         
-        if (offer.hasOffer()) {
+        if (offer.isValid()) {
+            System.out.println("Making offer: " + offer);
             TradeResponse response = trader.makeTrade(offer);
             if (response.isAccepted()) {
+                System.out.println("Trade accepted! Finalizing trade.");
                 player.finalizeTrade(response.getFinalOffer());
+                System.out.println("Resources after trade: Food=" + player.getCurrentFood() + 
+                                  ", Water=" + player.getCurrentWater() + 
+                                  ", Gold=" + player.getCurrentGold());
+            } else {
+                System.out.println("Trade rejected. Checking for counter offer...");
+                TradeOffer counter = trader.generateCounterOffer(offer);
+                if (counter != null && counter.isValid()) {
+                    System.out.println("Received counter offer: " + counter);
+                    // Accept any counter offer if we can afford it
+                    if (player.canAffordOffer(counter) && trader.acceptTraderCounterOffer()) {
+                        System.out.println("Accepting counter offer");
+                        player.finalizeTrade(counter);
+                        System.out.println("Resources after trade: Food=" + player.getCurrentFood() + 
+                                          ", Water=" + player.getCurrentWater() + 
+                                          ", Gold=" + player.getCurrentGold());
+                    } else {
+                        System.out.println("Cannot afford counter offer or counter rejected");
+                    }
+                } else {
+                    System.out.println("No counter offer received.");
+                }
+            }
+        } else {
+            // This should never happen now due to our fallback logic
+            System.out.println("ERROR: Could not create a valid trade offer despite fallbacks.");
+        }
+    }
+    
+    /**
+     * Look for traders in nearby squares and move to them if found
+     * @return true if trader found and moved to
+     */
+    private boolean checkForNearbyTrader() {
+        // Conservative players always want to check for trading opportunities
+        for (Direction dir : Direction.values()) {
+            Position newPos = player.getPosition().move(dir);
+            if (map.inBounds(newPos.getX(), newPos.getY())) {
+                Square square = map.getSquare(newPos);
+                if (square.hasTrader() && player.canMove(dir)) {
+                    System.out.println("ConservativeBrain: Found trader nearby, moving to trade");
+                    movePlayer(dir);
+                    return true;
+                }
             }
         }
+        return false;
     }
 }

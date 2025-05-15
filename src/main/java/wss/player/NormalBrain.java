@@ -1,206 +1,206 @@
 package wss.player;
 
-import wss.player.Player;
+import wss.game.Direction;
 import wss.game.Map;
-import wss.game.*;
-import wss.items.*;
-import wss.trader.*;
+import wss.game.Path;
+import wss.game.Position;
+import wss.game.Square;
+import wss.items.Item;
+import wss.trader.TradeOffer;
+import wss.trader.TradeResponse;
+import wss.trader.Trader;
+import wss.util.GameLogger;
+import wss.WSSGameEngine;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
-import wss.trader.TradeResponse;
-import wss.game.Square;
-import wss.trader.Trader;
-import wss.trader.TradeOffer;
-
 
 public class NormalBrain extends Brain {
-    private static final double RESOURCE_THRESHOLD = 0.4;
-    private static final double MOVEMENT_THRESHOLD = 0.4;
+    // Simple thresholds for strength management
+    private static final double CRITICAL_STRENGTH = 0.3;
+    private int consecutiveMoves = 0;
     
     public NormalBrain(Player player, Map map) {
         super(player, map);
     }
     
+    public NormalBrain(Player player, Map map, WSSGameEngine gameEngine) {
+        super(player, map, gameEngine);
+    }
+    
     @Override
     public void makeMove() {
-        // Check critical needs first
-        if (isCriticalResourceLevel()) {
-            handleCriticalResources();
+        GameLogger.section("Decision Making");
+        
+        // Check if we need to rest based on strength
+        if (shouldRest()) {
+            rest();
+            consecutiveMoves = 0;
             return;
         }
         
-        // Balance between moving east and gathering resources
-        if (shouldGatherResources()) {
-            handleResourceGathering();
-        } else {
-            moveTowardEast();
-
-
+        // Try to move east whenever possible
+        boolean moved = false;
+        
+        // Direct east is best
+        if (player.canMove(Direction.EAST)) {
+            GameLogger.info("Moving EAST (optimal direction)");
+            movePlayer(Direction.EAST);
+            moved = true;
         }
-
+        // Northeast and southeast are second best
+        else if (player.canMove(Direction.NORTHEAST)) {
+            GameLogger.info("Moving NORTHEAST (second best option)");
+            movePlayer(Direction.NORTHEAST);
+            moved = true;
+        }
+        else if (player.canMove(Direction.SOUTHEAST)) {
+            GameLogger.info("Moving SOUTHEAST (second best option)");
+            movePlayer(Direction.SOUTHEAST);
+            moved = true;
+        }
+        // North and south to find a path around obstacles
+        else if (player.canMove(Direction.NORTH)) {
+            GameLogger.info("Moving NORTH (searching for path)");
+            movePlayer(Direction.NORTH);
+            moved = true;
+        }
+        else if (player.canMove(Direction.SOUTH)) {
+            GameLogger.info("Moving SOUTH (searching for path)");
+            movePlayer(Direction.SOUTH);
+            moved = true;
+        }
+        
+        if (moved) {
+            consecutiveMoves++;
+            GameLogger.info("Consecutive moves: " + consecutiveMoves);
+        } else {
+            // If no moves possible, rest
+            GameLogger.warning("No valid moves available, resting instead");
+            rest();
+            consecutiveMoves = 0;
+        }
+        
+        // Always collect items after moving
         Square currentSquare = map.getSquare(player.getX(), player.getY());
         currentSquare.collectItem(player);
-    }
-    
-
-
-private void handleCriticalResources() {
-    Path foodPath = player.getVision().closestFood(player, map);
-    if (foodPath != null && isPathFeasible(foodPath)) {
-        followPath(foodPath);
-        return;
-    }
-
-    Path waterPath = player.getVision().closestWater(player, map);
-    if (waterPath != null && isPathFeasible(waterPath)) {
-        followPath(waterPath);
-        return;
-    }
-
-    player.rest();
-}
-
-    private boolean shouldGatherResources() {
-        // Gather resources if below threshold or if eastward path is too costly
-        return player.getCurrentFood() < player.getMaxFood() * RESOURCE_THRESHOLD ||
-               player.getCurrentWater() < player.getMaxWater() * RESOURCE_THRESHOLD ||
-               player.getCurrentMovement() < player.getMaxMovement() * MOVEMENT_THRESHOLD ||
-               !hasFeasibleEastPath();
-    }
-    
-    private void handleResourceGathering() {
-        // Prioritize based on most critical need
-        if (player.getCurrentFood() < player.getCurrentWater()) {
-            Path foodPath = player.getVision().closestFood(player, map);
-            if (foodPath != null && isPathFeasible(foodPath)) {
-                followPath(foodPath);
-                return;
-            }
-        }
         
-        Path waterPath = player.getVision().closestWater(player, map);
-        if (waterPath != null && isPathFeasible(waterPath)) {
-            followPath(waterPath);
-            return;
-        }
-        
-        // If no resources nearby, try to rest or find easier path
-        if (player.getCurrentMovement() < player.getMaxMovement() * 0.5) {
-            player.rest();
-        } else {
-            Path easiestPath = player.getVision().easiestPath(player, map);
-            if (easiestPath != null && isPathFeasible(easiestPath)) {
-                followPath(easiestPath);
-            } else {
-                player.rest();
+        // Simple trading when encountering traders
+        if (currentSquare.hasTrader()) {
+            Trader trader = currentSquare.getTrader();
+            if (trader.getCurrentState() == wss.trader.TraderState.NEGOTIATING) {
+                initiateTrade(trader);
             }
         }
     }
     
-    private void moveTowardEast() {
-        // Try to find a path that balances eastward progress with resource costs
-        Path bestPath = null;
-        double bestScore = Double.MIN_VALUE;
-        
-        for (Direction dir : Direction.eastwardDirections()) {
-            if (player.canMove(dir)) {
-                Square nextSquare = map.getSquare(player.getPosition().move(dir));
-                double score = calculateDirectionScore(dir, nextSquare);
-                
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestPath = new Path(List.of(dir), 
-                                     nextSquare.getMovementCost(),
-                                     nextSquare.getFoodCost(),
-                                     nextSquare.getWaterCost());
-                }
-            }
+    private boolean shouldRest() {
+        // Rest if strength is critically low
+        if (player.getCurrentStrength() < player.getMaxStrength() * CRITICAL_STRENGTH) {
+            GameLogger.info("Strength critically low (" + player.getCurrentStrength() + "/" + 
+                          player.getMaxStrength() + "), need to rest");
+            return true;
         }
         
-        if (bestPath != null) {
-            followPath(bestPath);
-        } else {
-            player.rest();
+        // Rest after several consecutive moves
+        if (consecutiveMoves >= 3) {
+            GameLogger.info("Made " + consecutiveMoves + " consecutive moves, time to rest");
+            return true;
         }
-    }
-    
-    private double calculateDirectionScore(Direction dir, Square square) {
-        // Score based on eastward progress, resource costs, and current needs
-        double eastScore = dir == Direction.EAST ? 1.0 : 
-                          dir.isEastward() ? 0.7 : 0.3;
         
-        double foodScore = 1.0 - (square.getFoodCost() / player.getCurrentFood());
-        double waterScore = 1.0 - (square.getWaterCost() / player.getCurrentWater());
-        double movementScore = 1.0 - (square.getMovementCost() / player.getCurrentMovement());
-        
-        // Weight scores based on current needs
-        double foodWeight = player.getCurrentFood() < player.getMaxFood() * 0.6 ? 1.5 : 1.0;
-        double waterWeight = player.getCurrentWater() < player.getMaxWater() * 0.6 ? 1.5 : 1.0;
-        double movementWeight = player.getCurrentMovement() < player.getMaxMovement() * 0.6 ? 1.5 : 1.0;
-        
-        return eastScore * 2.0 + 
-               foodScore * foodWeight + 
-               waterScore * waterWeight + 
-               movementScore * movementWeight;
-    }
-    
-    private boolean hasFeasibleEastPath() {
-        for (Direction dir : Direction.eastwardDirections()) {
-            if (player.canMove(dir)) {
-                Square square = map.getSquare(player.getPosition().move(dir));
-                if (square.getFoodCost() <= player.getCurrentFood() &&
-                    square.getWaterCost() <= player.getCurrentWater() &&
-                    square.getMovementCost() <= player.getCurrentMovement()) {
-                    return true;
-                }
-            }
-        }
         return false;
     }
     
     @Override
+    protected void rest() {
+        GameLogger.section("Resting");
+        GameLogger.info("Resting to recover strength");
+        player.rest();
+        consecutiveMoves = 0;
+        GameLogger.success("Strength recovered: " + player.getCurrentStrength());
+    }
+    
+    private TradeOffer createSimpleTradeOffer() {
+        TradeOffer offer = new TradeOffer();
+        
+        // Simple trading - trade what we have more of for what we have less of
+        if (player.getCurrentFood() > player.getCurrentWater() + 5) {
+            // Trade excess food for water
+            offer.setFoodOffered(3);
+            offer.setWaterRequested(3);
+            GameLogger.info("Trading strategy: excess food for water");
+        } 
+        else if (player.getCurrentWater() > player.getCurrentFood() + 5) {
+            // Trade excess water for food
+            offer.setWaterOffered(3);
+            offer.setFoodRequested(3);
+            GameLogger.info("Trading strategy: excess water for food");
+        }
+        // Use gold if we have it
+        else if (player.getCurrentGold() > 0) {
+            offer.setGoldOffered(1);
+            
+            // Ask for what we need most
+            if (player.getCurrentFood() < player.getCurrentWater()) {
+                offer.setFoodRequested(2);
+                GameLogger.info("Trading strategy: gold for food");
+            } else {
+                offer.setWaterRequested(2);
+                GameLogger.info("Trading strategy: gold for water");
+            }
+        }
+        // Fallback trade
+        else {
+            // Just trade 1:1 if no clear advantage
+            offer.setFoodOffered(2);
+            offer.setWaterRequested(2);
+            GameLogger.info("Trading strategy: fallback food for water");
+        }
+        
+        return offer;
+    }
+    
+    @Override
     protected boolean shouldTradeWith(Trader trader) {
-        // Trade if we have imbalance in resources
-        return (player.getCurrentFood() > player.getMaxFood() * 0.7 && 
-                player.getCurrentWater() < player.getMaxWater() * 0.5) ||
-               (player.getCurrentWater() > player.getMaxWater() * 0.7 && 
-                player.getCurrentFood() < player.getMaxFood() * 0.5) ||
-               (player.getCurrentGold() > 3 && 
-                (player.getCurrentFood() < player.getMaxFood() * 0.4 || 
-                 player.getCurrentWater() < player.getMaxWater() * 0.4));
+        return true;
     }
     
     @Override
     protected void initiateTrade(Trader trader) {
-        TradeOffer offer = new TradeOffer();
+        GameLogger.section("Trading");
         
-        // Balance resources
-        if (player.getCurrentFood() > player.getMaxFood() * 0.7 && 
-            player.getCurrentWater() < player.getMaxWater() * 0.5) {
-            offer.setFoodOffered((int)(player.getCurrentFood() - player.getMaxFood() * 0.5));
-            offer.setWaterRequested(offer.getFoodOffered());
-        } 
-        else if (player.getCurrentWater() > player.getMaxWater() * 0.7 &&
-                player.getCurrentFood() < player.getMaxFood() * 0.5) {
-            offer.setWaterOffered((int)(player.getCurrentWater() - player.getMaxWater() * 0.5));
-            offer.setFoodRequested(offer.getWaterOffered());
-        }
-        else if (player.getCurrentGold() > 3) {
-            // Use gold to supplement needed resources
-            offer.setGoldOffered(Math.min(3, player.getCurrentGold()));
-            if (player.getCurrentFood() < player.getCurrentWater()) {
-                offer.setFoodRequested(offer.getGoldOffered() * 2);
+        TradeOffer offer = createSimpleTradeOffer();
+        GameLogger.info("Making offer: " + offer);
+        
+        TradeResponse response = trader.makeTrade(offer);
+        
+        if (response.isAccepted()) {
+            GameLogger.success("Trade accepted!");
+            player.finalizeTrade(response.getFinalOffer());
+            GameLogger.info("Resources after trade: Food=" + player.getCurrentFood() + 
+                           ", Water=" + player.getCurrentWater() + 
+                           ", Gold=" + player.getCurrentGold());
+        } else {
+            GameLogger.warning("Trade rejected. Checking for counter-offer...");
+            TradeOffer counter = trader.generateCounterOffer(offer);
+            
+            if (counter != null && counter.isValid() && player.canAffordOffer(counter)) {
+                GameLogger.info("Received counter-offer: " + counter);
+                GameLogger.info("Counter-offer is acceptable, accepting");
+                trader.acceptTraderCounterOffer();
+                player.finalizeTrade(counter);
+                GameLogger.info("Resources after trade: Food=" + player.getCurrentFood() + 
+                               ", Water=" + player.getCurrentWater() + 
+                               ", Gold=" + player.getCurrentGold());
+            } else if (counter == null) {
+                GameLogger.warning("No counter-offer received");
+            } else if (!counter.isValid()) {
+                GameLogger.error("Counter-offer is invalid");
             } else {
-                offer.setWaterRequested(offer.getGoldOffered() * 2);
-            }
-        }
-        
-        if (offer.hasOffer()) {
-            TradeResponse response = trader.makeTrade(offer);
-            if (response.isAccepted()) {
-                player.finalizeTrade(response.getFinalOffer());
+                GameLogger.error("Cannot afford counter-offer");
             }
         }
     }
 }
+
